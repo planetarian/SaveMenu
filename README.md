@@ -1,19 +1,18 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Save Menu
+# <img src="public/icons/48.png" width="45" align="left"> SaveMenu!
 
-My Chrome Extension
+Save the World!
 
 ## Features
 
-- Feature 1
-- Feature 2
+- Quick Save menu with submenus support
+- Set any number of save locations (must be subdirectories of the Downloads folder on Windows)
+- Special handling for Twitter and Pixiv
 
 ## Install
 
-[**Chrome** extension]() <!-- TODO: Add chrome extension link inside parenthesis -->
-
-## Contribution
-
-Suggestions and pull requests are welcomed!.
+1) Run `npm run build`
+2) Go to the Extensions page, enable Developer Mode
+3) Click Load Unpacked and select the Build folder
 
 ---
 
