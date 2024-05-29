@@ -1,32 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>My Chrome Extension</title>
-    <link rel="stylesheet" href="popup.css" />
-  </head>
-  <body>
-    <div class="app">
-      <p class="counter-label">Counter</p>
-      <div id="counter" class="counter"></div>
-      <div class="button-container">
-        <button id="decrementBtn" class="button">-</button>
-        <button id="incrementBtn" class="button">+</button>
-      </div>
-
-      <hr class="divider" />
-
-      <p class="title">Chrome Extension is Ready!</p>
-      <p class="subtitle">Start by updating <code>popup.html</code></p>
-    </div>
-
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SaveMenu Configuration</title>
+    <link rel="stylesheet" href="popup.css">
     <script src="popup.js"></script>
-
-    <!--
-      This HTML file opens when you click on icon from the toolbar.
-
-      To begin the development, run `npm run watch`.
-      To create a production bundle, use `npm run build`.
-    -->
-  </body>
+</head>
+<body>
+  <div id="root">
+    <h1>Save the World!</h1>
+    <p>
+        <label for="showLast">Show last-used location</label>
+        <input type="checkbox" id="showLast" data-sbind="checked: showLastDest" />
+    </p>
+    <p>
+        <label for="locations"><span data-sbind="visible: !locationsTextIsValid" title="Validation error">⛔</span>Locations</label>
+        <textarea name="locations" class="spacious" data-sbind="textInput: locationsText"></textarea>
+    </p>
+    <!-- ko if: !pixivRefreshToken -->
+    <h3>Pixiv setup</h3>
+    <p>
+        <ol>
+            <li>Click 'Login' below, and a new tab will open with the Pixiv login page.</li>
+            <li>In the tab that opens, press F12 to open the developer tools.</li>
+            <li>In the developer tools, go to the Network tab.</li>
+            <li>Use the login page to sign into your account. <strong>You only have about 30 seconds to complete the remaining steps past this point.</strong></li>
+            <li>In the Network tab of the developer tools, look for an entry that starts with 'callback'.</li>
+            <li>Rightclick the 'callback' entry, and click Copy -> Copy Link Address.</li>
+            <li>Reopen this panel and paste the copied text into the Challenge Code field below, then click Submit.</li>
+            <li>Wait a moment and the Refresh Token should fill in. Click Save to finish.</li>
+        </ol>
+        <button data-sbind="click: getChallengeCode">Login</button>
+    </p>
+    <p>
+        <label for="pixivChallengeCode">Challenge Code / URL</label>
+        <input type="text" id="pixivChallengeCode" data-sbind="textInput: pixivChallengeCode"/>
+        <button data-sbind="enable: canSubmitChallengeCode, click: submitChallengeCode">Submit</button>
+    </p>
+    <!-- /ko -->
+    <p>
+        <label for="pixivRefreshToken">Pixiv Refresh Token</label>
+        <input type="text" id="pixivRefreshToken" data-sbind="textInput: pixivRefreshToken"/>
+    </p>
+    <p>
+        <button data-sbind="enable: settingsAreValid, click: saveSettings">Save</button>
+        <span data-sbind="visible: showSaveSuccess">Saved ✔</span>
+    </p>
+  </div>
+</body>
 </html>

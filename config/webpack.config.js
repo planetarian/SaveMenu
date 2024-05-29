@@ -1,5 +1,7 @@
 'use strict';
 
+var webpack = require("webpack");
+
 const { merge } = require('webpack-merge');
 
 const common = require('./webpack.common.js');
@@ -14,6 +16,12 @@ const config = (env, argv) =>
       background: PATHS.src + '/background.js',
     },
     devtool: argv.mode === 'production' ? false : 'source-map',
+    plugins: [
+      new webpack.ProvidePlugin({
+          $: "jquery",
+          jQuery: "jquery"
+      })
+  ]
   });
 
 module.exports = config;

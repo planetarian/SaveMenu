@@ -1,112 +1,94 @@
 'use strict';
 
 import './popup.css';
+import ko from 'knockout';
+import ksb from 'knockout-secure-binding';
 
-(function () {
-  // We will make use of Storage API to get and store `count` value
-  // More information on Storage API can we found at
-  // https://developer.chrome.com/extensions/storage
+class ViewModel {
+    constructor() {
+        this.locationsDefault = { Downloads: "./" };
 
-  // To get storage access, we have to mention it in `permissions` property of manifest.json file
-  // More information on Permissions can we found at
-  // https://developer.chrome.com/extensions/declare_permissions
-  const counterStorage = {
-    get: (cb) => {
-      chrome.storage.sync.get(['count'], (result) => {
-        cb(result.count);
-      });
-    },
-    set: (value, cb) => {
-      chrome.storage.sync.set(
-        {
-          count: value,
-        },
-        () => {
-          cb();
-        }
-      );
-    },
+        this.locationsText = ko.observable("");
+        this.showLastDest = ko.observable(true);
+        this.showSaveSuccess = ko.observable(false);
+
+        this.pixivRefreshToken = ko.observable("");
+        this.pixivChallengeCode = ko.observable("");
+        this.canSubmitChallengeCode = ko.computed(() => !!this.pixivChallengeCode());
+        
+        this.locationsTextIsValid = ko.computed(() => !!this.checkLocationsText());
+        this.settingsAreValid = ko.computed(() => !!this.locationsTextIsValid());
+    }
+  
+
+  async getChallengeCode () {
+      await chrome.runtime.sendMessage({action: 'getChallengeCode'});
+  };
+  async submitChallengeCode () {
+      const { refreshToken } = await chrome.runtime.sendMessage({action: 'getRefreshToken', code: this.pixivChallengeCode()});
+      this.pixivRefreshToken(refreshToken);
   };
 
-  function setupCounter(initialValue = 0) {
-    document.getElementById('counter').innerHTML = initialValue;
-
-    document.getElementById('incrementBtn').addEventListener('click', () => {
-      updateCounter({
-        type: 'INCREMENT',
-      });
-    });
-
-    document.getElementById('decrementBtn').addEventListener('click', () => {
-      updateCounter({
-        type: 'DECREMENT',
-      });
-    });
-  }
-
-  function updateCounter({ type }) {
-    counterStorage.get((count) => {
-      let newCount;
-
-      if (type === 'INCREMENT') {
-        newCount = count + 1;
-      } else if (type === 'DECREMENT') {
-        newCount = count - 1;
-      } else {
-        newCount = count;
+  checkLocationsText () {
+      if (!this.locationsText()) {
+          this.locationsText(JSON.stringify(this.locationsDefault, null, 2));
+          return true;
       }
-
-      counterStorage.set(newCount, () => {
-        document.getElementById('counter').innerHTML = newCount;
-
-        // Communicate with content script of
-        // active tab by sending a message
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          const tab = tabs[0];
-
-          chrome.tabs.sendMessage(
-            tab.id,
-            {
-              type: 'COUNT',
-              payload: {
-                count: newCount,
-              },
-            },
-            (response) => {
-              console.log('Current count value passed to contentScript file');
-            }
-          );
-        });
-      });
-    });
-  }
-
-  function restoreCounter() {
-    // Restore count value
-    counterStorage.get((count) => {
-      if (typeof count === 'undefined') {
-        // Set counter value as 0
-        counterStorage.set(0, () => {
-          setupCounter(0);
-        });
-      } else {
-        setupCounter(count);
+      try {
+          let asJson = JSON.parse(this.locationsText());
+          return !Array.isArray(asJson);
       }
-    });
-  }
+      catch {
+          return false;
+      }
+  };
 
-  document.addEventListener('DOMContentLoaded', restoreCounter);
+  async loadSettings () {
+      try {
+          let data = await chrome.storage.local.get(['locations', 'showLastDest', 'lastDest', 'pixivRefreshToken']);
+          return data;
+      }
+      catch (error) {
+          console.log("Error occurred while loading saved locations.\n" + error);
+          return { _error_: error };
+      }
+  };
+  
+  async saveSettings () {
+      if (!this.locationsTextIsValid()) {
+          throw Error("Locations not valid.");
+      }
+      try {
+          let locations = this.locationsText();
+          await chrome.storage.local.set({
+              showLastDest: this.showLastDest(),
+              locations,
+              pixivRefreshToken: this.pixivRefreshToken()
+          });
+          const settings = await this.loadSettings();
+          await chrome.runtime.sendMessage({action: 'settingsSaved', settings});
+          this.showSaveSuccess(true);
+          setTimeout(() => this.showSaveSuccess(false), 3*1000);
+      }
+      catch (error) {
+          console.log("Error occurred while saving settings.\n" + error);
+      }
+  };
+};
 
-  // Communicate with background file by sending a message
-  chrome.runtime.sendMessage(
-    {
-      type: 'GREETINGS',
-      payload: {
-        message: 'Hello, my name is Pop. I am from Popup.',
-      },
-    },
-    (response) => {
-      console.log(response.message);
-    }
-  );
-})();
+const initialize = async function() {
+    const vm = new ViewModel();
+    ko.applyBindings(vm, document.getElementById('root'));
+    let settings = await vm.loadSettings();
+    vm.locationsText(settings.locations);
+    vm.showLastDest(settings.showLastDest);
+    vm.pixivRefreshToken(settings.pixivRefreshToken);
+}
+
+//await initialize();
+$(document).ready(async () => {
+    ko.bindingProvider.instance = new ksb();
+    window.ko = ko;
+    await initialize();
+    console.log("initialized.");
+});
