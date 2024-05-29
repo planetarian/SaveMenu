@@ -1,9 +1,9 @@
 'use strict';
 
+import sanitize from 'sanitize-filename'
 import qs from 'qs';
 import sha256 from 'sha256';
 import PixivApi from 'pixiv-api-client';
-
 import axios from 'axios';
 import fetchAdapter from '@haverstack/axios-fetch-adapter';
 axios.defaults.adapter = fetchAdapter;
@@ -163,6 +163,8 @@ var handleOnMenuClicked = async function (info, tab) {
             if (!filename)
                 filename = randomFilename64(32);
         }
+
+        filename = sanitize(filename);
 
         // Decide upon destination folder and set file path/name
         if (dest == '.')
