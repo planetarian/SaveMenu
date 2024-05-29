@@ -36,7 +36,7 @@ var getFilenameOverride = function (url) {
                     console.log("getFilenameOverride: Invalid input.");
                     return null;
                 }
-                return "twt_" + acc + "_" + id + (photonum > 0 ? "_" + photonum : "");
+                return "twt_" + acc + "_" + id + (photonum > 1 ? "_" + photonum : "");
             }
             filenameOverride = url.replace(twitterRegex, replace);
         }
