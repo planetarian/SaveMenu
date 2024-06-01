@@ -60,17 +60,17 @@ var handleOnMenuClicked = async function (info, tab) {
     if (info.pageUrl) {
         console.log("Page: " + info.pageUrl);
         url = info.pageUrl;
-        filenameOverride = filenameOverride || getFilenameOverride(info.pageUrl);
+        filenameOverride = getFilenameOverride(info.pageUrl) || filenameOverride;
     }
     if (info.frameUrl) {
         console.log("Frame: " + info.frameUrl);
         url = info.frameUrl;
-        filenameOverride = filenameOverride || getFilenameOverride(info.frameUrl);
+        filenameOverride = getFilenameOverride(info.frameUrl) || filenameOverride;
     }
     if (info.linkUrl) {
         console.log("Link: " + info.linkUrl);
         url = info.linkUrl;
-        filenameOverride = filenameOverride || getFilenameOverride(info.linkUrl);
+        filenameOverride = getFilenameOverride(info.linkUrl) || filenameOverride;
     }
     if (info.srcUrl) {
         console.log("Src: " + info.srcUrl);
