@@ -17,7 +17,8 @@ var sleep = function (ms) {
 
 var getSettings = async function () {
     try {
-        const data = await chrome.storage.local.get(['locations', 'destinationMap', 'showLastDest', 'lastDest', 'pixivRefreshToken']);
+        const data = await chrome.storage.local.get(
+            ['locations', 'destinationMap', 'showLastDest', 'lastDest', 'replacements', 'pixivRefreshToken']);
         return data;
     }
     catch (error) {
@@ -81,6 +82,10 @@ var handleOnMenuClicked = async function (info, tab) {
 
     const store = await getSettings();
     let dest = store.destinationMap[info.menuItemId];
+
+    let replacements = store.replacements;
+    replacements.forEach(r => url = url.replace(r.target, r.replacement));
+
     let finalUrl = url;
     let originalExtension = '';
     let forceExtension = '';
