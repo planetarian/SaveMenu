@@ -46,64 +46,63 @@ document.addEventListener("contextmenu", async function (ev) {
         
         // Bluesky has special handling due to being an annoying React app
         const bskyImageData = getBskyImageUrlData(ev.target.src);
-        let bskyUser, bskyPostId, bskyImageIndex, bskyImageCount;
+        let container, bskyUser, bskyPostId, bskyImageIndex, bskyImageCount, els;
         if (!!bskyImageData) {
             console.log("Looks like a bsky post image. Looking for post info...");
             console.log(`data1: ${bskyImageData.data1}`);
             console.log(`data2: ${bskyImageData.data2}`);
 
+            /*
             // check if we're in a post page
-            const postPageEl = $("div[data-testid='postThreadScreen']");
+            let container = $("div[data-testid='postThreadScreen']");
             let els;
             let pageType = 'none';
-            if (postPageEl.length) {
+            if (container.length) {
                 pageType = 'post';
                 console.log("Looks like we're on a post page.");
-                const container = postPageEl[0].children[0].children[0];
-                els = $(container).find('div[data-testid^=postThreadItem]');
+                els = container.find('div[data-testid^=postThreadItem]');
             }
             if (pageType === 'none') {
                 // check if we're on a timeline
-                const timelineEl = $("div[data-testid='followingFeedPage-feed-flatlist']");
-                if (timelineEl.length) {
+                container = $("div[data-testid='HomeScreen']");
+                if (container.length) {
                     pageType = 'timeline';
                     console.log("Looks like we're on a timeline view.");
-                    const container = timelineEl[0].children[1];
-                    els = $(container).find('div[data-testid^=feedItem]');
+                    els = container.find('div[data-testid^=feedItem]');
                 }
             }
             if (pageType === 'none') {
                 // check if we're on a timeline
-                const timelineEl = $("div[data-testid='postsFeed-flatlist']");
-                if (timelineEl.length) {
+                container = $("div[data-testid='profileScreen']");
+                if (container.length) {
                     pageType = 'profile';
                     console.log("Looks like we're on a profile view.");
-                    const container = timelineEl[0].children[1];
-                    els = $(container).find('div[data-testid^=feedItem]');
+                    els = container.find('div[data-testid^=feedItem]');
                 }
             }
             if (pageType === 'none') {
-                const chatEl = $("div[data-testid='convoScreen']");
-                if (chatEl.length) {
+                container = $("div[data-testid='convoScreen']");
+                if (container.length) {
                     pageType = 'chat';
                     console.log("Looks like we're on a chat view.");
-                    const container = chatEl[0].children[0];
-                    els = $(container).find('div[role=link]');
+                    els = container.find('div[role=link]');
                 }
             }
             if (pageType === 'none') {
-                const searchPageEl = $("div[data-testid='searchScreen']");
-                if (searchPageEl.length) {
+                container = $("div[data-testid='searchScreen']");
+                if (container.length) {
                     pageType = 'search';
                     console.log("Looks like we're on a search results view.");
-                    els = searchPageEl.find('div[role=link]');
+                    els = container.find('div[role=link]');
                 }
             }
-            if (pageType === 'none') {
-                console.log("Couldn't determine the view type of the current page. Might be a feed?");
-                const mainEl = $("main[role=main]");
-                els = mainEl.find('div[role=link]');
-            }
+            if (pageType === 'none') {*/
+                //console.log("Couldn't determine the view type of the current page. Might be a feed?");
+                container = $("main[role=main]");
+                if (container.length) {
+                    els = container.find('div[role=link], div[data-testid^=postThreadItem]');
+                }
+            //}
             if (!els?.length) {
                 console.log("Couldn't find the items container for the current page.");
                 return;
@@ -113,7 +112,7 @@ document.addEventListener("contextmenu", async function (ev) {
                 const el = els[i];
                 let user, postId;
                 // If we're on a thread view, we can reference the URL
-                if (pageType === 'thread' && i == 0) {
+                if (document.URL.includes('/post/') && i == 0) {
                     var urlData = getBskyPostUrlData(document.URL);
                     if (!urlData) {
                         console.log("Invalid URL: " + document.URL);
