@@ -27,10 +27,11 @@ var getSettings = async function () {
     }
 };
 
-var getFilenameOverride = function (url) {
-    let filenameOverride = null;
+var getFilenameOverride = function (url, evInfo, context, filenameOverride) {
     try {
         const twitterRegex = /(?<pre>https?:\/\/)(?:x|(?:(?:v|f)x)?twitter)\.com(?<post>\/(?<acc>\w+)\/status\/(?<id>\d+)(?:\/photo(?:\/(?<photonum>\d+)?)?)?)(?:\/en)*(?<query>(?:\?$|[a-zA-Z0-9\.\,\;\?\'\\\+&%\$\=~_\-\*]+))?(?<fragment>#[a-zA-Z0-9\-\.]+)?/gi;
+        const bskyImgRegex = /^(?<pre>https?:\/\/)(\w+\.)+\w+\/img\/feed_(?<size>fullsize|thumbnail)\/plain\/did:plc:\w+\/\w+@(?<type>jpe?g|png)(\?.*)?$/gi;
+
         if (twitterRegex.test(url)) {
             const replace = function (match, pre, post, acc, id, photonum, query, fragment, rest) {
                 if (!acc || !id) {
@@ -41,6 +42,14 @@ var getFilenameOverride = function (url) {
             }
             filenameOverride = url.replace(twitterRegex, replace);
         }
+        else if (bskyImgRegex.test(url)) {
+            url = url.replace(/@jpe?g/gi, "@png").replace(/\/feed_thumbnail\//, "/feed_fullsize/");
+            
+            if (context.filename) {
+                // we did the filename handling within the page context
+                filenameOverride = context.filename;
+            }
+        }
 
         if (filenameOverride)
             console.log("Derived: " + filenameOverride);
@@ -50,32 +59,36 @@ var getFilenameOverride = function (url) {
         console.log(err);
     }
 
-    return filenameOverride;
+    return { url, filenameOverride };
 };
 
+
+let contextInfo = null;
 
 var handleOnMenuClicked = async function (info, tab) {
     let url = null;
     let filenameOverride = null;
+    let context = contextInfo;
 
     if (info.pageUrl) {
         console.log("Page: " + info.pageUrl);
         url = info.pageUrl;
-        filenameOverride = getFilenameOverride(info.pageUrl) || filenameOverride;
+        ({ url, filenameOverride } = getFilenameOverride(info.pageUrl, info, context, filenameOverride));
     }
     if (info.frameUrl) {
         console.log("Frame: " + info.frameUrl);
         url = info.frameUrl;
-        filenameOverride = getFilenameOverride(info.frameUrl) || filenameOverride;
+        ({ url, filenameOverride } = getFilenameOverride(info.frameUrl, info, context, filenameOverride));
     }
     if (info.linkUrl) {
         console.log("Link: " + info.linkUrl);
         url = info.linkUrl;
-        filenameOverride = getFilenameOverride(info.linkUrl) || filenameOverride;
+        ({ url, filenameOverride } = getFilenameOverride(info.linkUrl, info, context, filenameOverride));
     }
     if (info.srcUrl) {
         console.log("Src: " + info.srcUrl);
         url = info.srcUrl;
+        ({ url, filenameOverride } = getFilenameOverride(info.srcUrl, info, context, filenameOverride));
     }
 
     if (!url) return;
@@ -253,6 +266,7 @@ var handleOnMenuClicked = async function (info, tab) {
 var generateContextMenus = async function (data) {
     chrome.contextMenus.onClicked.removeListener(handleOnMenuClicked);
 
+
     console.log("Locations:");
     console.log(JSON.parse(data.locations));
 
@@ -405,6 +419,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     else if (request.action == "getChallengeCode") {
         getChallengeCode(request, sender, sendResponse).then(sendResponse);
+    }
+    else if (request.action == "contextMenuOpened") {
+        contextInfo = request;
+        console.log("Context menu opened.");
+        console.log(contextInfo);
+        sendResponse(true);
     }
     else {
         console.log("Unhandled chrome.runtime.onMessage:");

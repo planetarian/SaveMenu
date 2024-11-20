@@ -35,7 +35,9 @@
       "run_at": "document_idle",
       "js": [
         "contentScript.js"
-      ]
+      ],
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "declarative_net_request": {
@@ -48,9 +50,9 @@
       ]
   },
   "web_accessible_resources": [
-      {
-      "resources": ["manifest.json"],
+    {
+      "resources": ["manifest.json", "*.map"],
       "matches": ["*://www.pixiv.net/*"]
-      }
+    }
   ]
 }
